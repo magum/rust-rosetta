@@ -51,6 +51,7 @@ authors = [
     "Tair Rzayev, https://github.com/tairrzayev",
     "Mathieu David, https://github.com/azerupi",
     "Keiichi Watanabe, https://github.com/kw-udon",
+    "Alexander Borodetsky, https://github.com/magum",
 ]
 
 [dependencies]
@@ -465,6 +466,12 @@ path = "src/function_composition.rs"
 # http://rosettacode.org/wiki/Function_definition
 name = "function_def"
 path = "src/function_def.rs"
+
+[[bin]]
+# http://rosettacode.org/wiki/Gaussian_elimination
+name = "gaussian_elimination"
+path = "src/gaussian_elimination.rs"
+
 
 [[bin]]
 # http://rosettacode.org/wiki/Gray_code
