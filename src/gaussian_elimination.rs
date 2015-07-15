@@ -5,7 +5,7 @@
 
 
 struct Matrix<'a, T:'a> {
-	m : &'a Vec<T>,
+	m : &'a mut Vec<T>,
 	n : usize
 }
 
@@ -13,13 +13,18 @@ struct Matrix<'a, T:'a> {
 struct Idx(usize, usize);
 
 impl<'a, T> Matrix<'a, T> {
-	fn new (_m : &'a Vec<T>, _n : usize) -> Matrix<'a, T> {
+	fn new (_m : &'a mut Vec<T>, _n : usize) -> Matrix<'a, T> {
 		Matrix{m : _m, n : _n} 
 	}
 
-	fn val(&self, idx : Idx) -> &T
+	fn val(&self, idx : Idx) -> & T
 	{
 		& self.m[idx.0 + idx.1 * self.n]
+	}
+
+	fn val_mut(&mut self, idx : Idx) -> &mut T
+	{
+		&mut self.m[idx.0 + idx.1 * self.n]
 	}
 
 	fn get_row_slice(&self, row: usize) -> &[T]
@@ -67,7 +72,7 @@ impl<'a, T:Copy> Iterator for MatrixRowIter<'a, T> {
 
 fn main() {
 
-	let v : Vec<f32> = vec![
+	let mut v : Vec<f32> = vec![
 		1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
 		1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
 		1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
@@ -75,7 +80,7 @@ fn main() {
 		1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
 		1.00, 3.14, 9.87, 31.01, 97.41, 306.02];
 
-	let mat = Matrix::new(&v, 6);
+	let mat = Matrix::new(&mut v, 6);
 
 	let mut r = Vec::new();
 	let mut used: Vec<bool> = vec![false; mat.n];
@@ -100,7 +105,7 @@ fn main() {
 		r.extend(mat.get_row_slice(max.1).iter());
 	}
 
-	let mat_out = Matrix::new(&r, mat.n);
+	let mut mat_out = Matrix::new(&mut r, mat.n);
 	for i in 0..mat_out.n {
 		for j in 0..mat_out.n {
 			print!("{} ", mat_out.val(Idx(j, i)));
@@ -108,5 +113,16 @@ fn main() {
 		println!("  ");
 	}
 
+	for dia in 0..mat_out.n {
+		for row in dia+1..mat_out.n {
+			//let tmp = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
+			for col in dia+1..mat_out.n {
+				//(*mat_out.val(Idx(col, row))) -= tmp;// * *mat_out.val(Idx(col, dia));
+				//mat_out.val_mut(Idx(dia, row)) = 0.0;
+				let ref mut  rr : &mut &f32 = mat_out.val_mut(Idx(dia, row));
+				**rr = 0.0;
+			}
+		}	
+	}
 
 }
