@@ -13,8 +13,8 @@ struct Matrix<'a, T:'a> {
 struct Idx(usize, usize);
 
 impl<'a, T> Matrix<'a, T> {
-	fn new (_m : &'a mut Vec<T>, _n : usize) -> Matrix<'a, T> {
-		Matrix{m : _m, n : _n} 
+	fn new<'c> (_m : &'c mut Vec<T>, _n : usize) -> Matrix<'c, T> {
+		Matrix{m : &mut _m, n : _n} 
 	}
 
 	fn val(&self, idx : Idx) -> & T
@@ -22,9 +22,10 @@ impl<'a, T> Matrix<'a, T> {
 		& self.m[idx.0 + idx.1 * self.n]
 	}
 
-	fn val_mut(&mut self, idx : Idx) -> &mut T
+	fn val_mut<'b>(&'b mut self, idx : Idx) -> &'b mut T
 	{
-		&mut self.m[idx.0 + idx.1 * self.n]
+		let r : &mut T =	& mut (*self.m)[idx.0 + idx.1 * self.n];
+		r
 	}
 
 	fn get_row_slice(&self, row: usize) -> &[T]
@@ -113,14 +114,18 @@ fn main() {
 		println!("  ");
 	}
 
-	for dia in 0..mat_out.n {
-		for row in dia+1..mat_out.n {
+	let n= mat_out.n;
+	for dia in 0..n {
+		for row in dia+1..n {
 			//let tmp = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
-			for col in dia+1..mat_out.n {
+			for col in dia+1..n {
 				//(*mat_out.val(Idx(col, row))) -= tmp;// * *mat_out.val(Idx(col, dia));
 				//mat_out.val_mut(Idx(dia, row)) = 0.0;
-				let ref mut  rr : &mut &f32 = mat_out.val_mut(Idx(dia, row));
-				**rr = 0.0;
+				//let ref mut  rr : &mut &f32 = mat_out.val_mut(Idx(dia, row));
+				let rr : & mut f32   = &mut mat_out.val_mut(Idx(dia, row));
+				println!("{}", rr);
+				//*mat_out.val_mut(Idx(dia, row)) = 0.0;
+				//*rr = 0.0;
 			}
 		}	
 	}
