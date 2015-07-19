@@ -2,6 +2,7 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+struct Idx(usize, usize);
 
 
 struct Matrix<'a, T:'a> where T: Copy {
@@ -9,8 +10,6 @@ struct Matrix<'a, T:'a> where T: Copy {
 	n : usize
 }
 
-
-struct Idx(usize, usize);
 
 impl<'a, T:'a> Matrix<'a, T> where T: Copy {
 	fn new<'b> (_m : &'b mut Vec<T>, _n : usize) -> Matrix<'b, T> {
@@ -28,9 +27,9 @@ impl<'a, T:'a> Matrix<'a, T> where T: Copy {
 	// 	r
 	// }
 
-	fn set(&mut self, idx : Idx, v : T)
+	fn set(&mut self, idx : Idx, v : T) where T: Copy
 	{
-		self.m[idx.0 + idx.1 * self.n] = v;
+		self.m[idx.0 + idx.1 * self.n] = *v;
 	}
 
 	fn get_row_slice(&self, row: usize) -> &[T]
@@ -120,6 +119,8 @@ fn main() {
 		println!("  ");
 	}
 
+	println!("========================");
+
 	let n= mat_out.n;
 	for dia in 0..n {
 		for row in dia+1..n {
@@ -131,10 +132,18 @@ fn main() {
 //				let rr : & mut f32   = &mut mat_out.val_mut(Idx(dia, row));
 	//			println!("{}", rr);
 				//*mat_out.val_mut(Idx(dia, row)) = 0.0;
-				mat_out.set(Idx(dia, row), &zero);
+				//mat_out.set(Idx(dia, row), &zero);
+				mat_out.set(Idx(dia, row), 0.0);
 				//*rr = 0.0;
 			}
 		}	
+	}
+
+	for i in 0..mat_out.n {
+		for j in 0..mat_out.n {
+			print!("{} ", mat_out.val(Idx(j, i)));
+		}
+		println!("  ");
 	}
 
 }
