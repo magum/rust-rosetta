@@ -2,6 +2,8 @@
 #![allow(unused_variables)]
 #![allow(dead_code)]
 
+use std::fmt::Debug;
+
 struct Idx(usize, usize);
 
 
@@ -11,25 +13,26 @@ struct Matrix<'a, T:'a> where T: Copy {
 }
 
 
-impl<'a, T:'a> Matrix<'a, T> where T: Copy {
+impl<'a, T:'a> Matrix<'a, T> where T: Copy + Debug {
 	fn new<'b> (_m : &'b mut Vec<T>, _n : usize) -> Matrix<'b, T> {
-		Matrix{m : /*&mut*/ _m, n : _n} 
+		Matrix{m : /*&mut*/ _m, n : _n}
 	}
 
 	fn val(&self, idx : Idx) -> & T
 	{
-		& self.m[idx.0 + idx.1 * self.n]
+		& (*self.m)[idx.0 + idx.1 * self.n]
 	}
 
-	// fn val_mut<'b>(&'b mut self, idx : Idx) -> &'b mut T
-	// {
-	// 	let r : &mut T =	& mut (*self.m)[idx.0 + idx.1 * self.n];
-	// 	r
-	// }
+	fn val_mut<'b>(&'b mut self, idx : Idx) -> &'b mut T
+	{
+		let r : &mut T =	& mut (*self.m)[idx.0 + idx.1 * self.n];
+		r
+	}
 
 	fn set(&mut self, idx : Idx, v : T) where T: Copy
 	{
-		self.m[idx.0 + idx.1 * self.n] = *v;
+		let rr : & mut T = self.val_mut(idx);
+		*rr = v;
 	}
 
 	fn get_row_slice(&self, row: usize) -> &[T]
@@ -39,23 +42,23 @@ impl<'a, T:'a> Matrix<'a, T> where T: Copy {
 }
 
 
-struct MatrixRowIter<'a, T:'a> where T: Copy {
+struct MatrixRowIter<'a, T:'a> where T: Copy + Debug {
 	m : &'a Matrix<'a, T>,
 	row : usize,
 	col : usize,
 	used: &'a Vec<bool>
 }
 
-impl<'a, T> MatrixRowIter<'a, T> where T: Copy {
+impl<'a, T> MatrixRowIter<'a, T> where T: Copy + Debug{
 	fn new (_m : &'a Matrix<'a, T>, _used: &'a mut Vec<bool>, _col : usize) -> MatrixRowIter<'a, T> {
-		MatrixRowIter{m : _m, row : 0, col : _col, used : _used } 
+		MatrixRowIter{m : _m, row : 0, col : _col, used : _used }
 	}
 
 }
 
 
 
-impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
+impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy + Debug {
     type Item = (T, usize);
     fn next(&mut self) -> Option<(T, usize)> {
     	loop {
@@ -68,10 +71,10 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
     		self.row += 1;
     	}
 
-    	let v = *self.m.val(Idx(self.col, self.row));
+    	let v = (*self.m).val(Idx(self.col, self.row));
     	let ret = self.row;
     	self.row += 1;
-      Some((v, ret))
+      Some((*v, ret))
     }
 }
 
@@ -99,7 +102,7 @@ fn main() {
 
 			max = mat_iter
 						.inspect(|&item| println!("{} {}", item.0, item.1) )
-						.fold((0.0, -1), 
+						.fold((0.0, -1),
 							|max, item| if item.0.abs() > max.0 { item } else { max } )
 						;
 		}
@@ -121,6 +124,7 @@ fn main() {
 
 	println!("========================");
 
+
 	let n= mat_out.n;
 	for dia in 0..n {
 		for row in dia+1..n {
@@ -130,13 +134,13 @@ fn main() {
 				//mat_out.val_mut(Idx(dia, row)) = 0.0;
 				//let ref mut  rr : &mut &f32 = mat_out.val_mut(Idx(dia, row));
 //				let rr : & mut f32   = &mut mat_out.val_mut(Idx(dia, row));
-	//			println!("{}", rr);
+				//println!("{}", rr);
+	//			*rr = 0.0;
 				//*mat_out.val_mut(Idx(dia, row)) = 0.0;
-				//mat_out.set(Idx(dia, row), &zero);
-				mat_out.set(Idx(dia, row), 0.0);
-				//*rr = 0.0;
+				//mat_out.set(Idx(dia, row), 0.0f32);
+				mat_out.set(Idx(dia, row), &zero);
 			}
-		}	
+		}
 	}
 
 	for i in 0..mat_out.n {
