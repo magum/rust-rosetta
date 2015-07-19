@@ -12,9 +12,9 @@ struct Matrix<'a, T:'a> {
 
 struct Idx(usize, usize);
 
-impl<'a, T> Matrix<'a, T> {
-	fn new<'c> (_m : &'c mut Vec<T>, _n : usize) -> Matrix<'c, T> {
-		Matrix{m : &mut _m, n : _n} 
+impl<'a, T:'a> Matrix<'a, T> {
+	fn new<'b> (_m : &'b mut Vec<T>, _n : usize) -> Matrix<'b, T> {
+		Matrix{m : /*&mut*/ _m, n : _n} 
 	}
 
 	fn val(&self, idx : Idx) -> & T
@@ -22,10 +22,15 @@ impl<'a, T> Matrix<'a, T> {
 		& self.m[idx.0 + idx.1 * self.n]
 	}
 
-	fn val_mut<'b>(&'b mut self, idx : Idx) -> &'b mut T
+	// fn val_mut<'b>(&'b mut self, idx : Idx) -> &'b mut T
+	// {
+	// 	let r : &mut T =	& mut (*self.m)[idx.0 + idx.1 * self.n];
+	// 	r
+	// }
+
+	fn set(&mut self, idx : Idx, v : T)
 	{
-		let r : &mut T =	& mut (*self.m)[idx.0 + idx.1 * self.n];
-		r
+		self.m[idx.0 + idx.1 * self.n] = v;
 	}
 
 	fn get_row_slice(&self, row: usize) -> &[T]
@@ -83,6 +88,7 @@ fn main() {
 
 	let mat = Matrix::new(&mut v, 6);
 
+	let zero:f32 = 0.0;
 	let mut r = Vec::new();
 	let mut used: Vec<bool> = vec![false; mat.n];
 
@@ -93,10 +99,10 @@ fn main() {
 			let mat_iter = MatrixRowIter::new(&mat, &mut used, i);
 
 			max = mat_iter
-										.inspect(|&item| println!("{} {}", item.0, item.1) )
-										.fold((0.0, -1), 
-											|max, item| if item.0.abs() > max.0 { item } else { max } )
-										;
+						.inspect(|&item| println!("{} {}", item.0, item.1) )
+						.fold((0.0, -1), 
+							|max, item| if item.0.abs() > max.0 { item } else { max } )
+						;
 		}
 
 		used[max.1] = true;
@@ -122,9 +128,10 @@ fn main() {
 				//(*mat_out.val(Idx(col, row))) -= tmp;// * *mat_out.val(Idx(col, dia));
 				//mat_out.val_mut(Idx(dia, row)) = 0.0;
 				//let ref mut  rr : &mut &f32 = mat_out.val_mut(Idx(dia, row));
-				let rr : & mut f32   = &mut mat_out.val_mut(Idx(dia, row));
-				println!("{}", rr);
+//				let rr : & mut f32   = &mut mat_out.val_mut(Idx(dia, row));
+	//			println!("{}", rr);
 				//*mat_out.val_mut(Idx(dia, row)) = 0.0;
+				mat_out.set(Idx(dia, row), &zero);
 				//*rr = 0.0;
 			}
 		}	
