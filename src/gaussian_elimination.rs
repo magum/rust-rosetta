@@ -4,7 +4,7 @@
 
 
 
-struct Matrix<'a, T:'a> {
+struct Matrix<'a, T:'a> where T: Copy {
 	m : &'a mut Vec<T>,
 	n : usize
 }
@@ -12,7 +12,7 @@ struct Matrix<'a, T:'a> {
 
 struct Idx(usize, usize);
 
-impl<'a, T:'a> Matrix<'a, T> {
+impl<'a, T:'a> Matrix<'a, T> where T: Copy {
 	fn new<'b> (_m : &'b mut Vec<T>, _n : usize) -> Matrix<'b, T> {
 		Matrix{m : /*&mut*/ _m, n : _n} 
 	}
@@ -40,14 +40,14 @@ impl<'a, T:'a> Matrix<'a, T> {
 }
 
 
-struct MatrixRowIter<'a, T:'a> {
+struct MatrixRowIter<'a, T:'a> where T: Copy {
 	m : &'a Matrix<'a, T>,
 	row : usize,
 	col : usize,
 	used: &'a Vec<bool>
 }
 
-impl<'a, T> MatrixRowIter<'a, T> {
+impl<'a, T> MatrixRowIter<'a, T> where T: Copy {
 	fn new (_m : &'a Matrix<'a, T>, _used: &'a mut Vec<bool>, _col : usize) -> MatrixRowIter<'a, T> {
 		MatrixRowIter{m : _m, row : 0, col : _col, used : _used } 
 	}
@@ -56,7 +56,7 @@ impl<'a, T> MatrixRowIter<'a, T> {
 
 
 
-impl<'a, T:Copy> Iterator for MatrixRowIter<'a, T> {
+impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
     type Item = (T, usize);
     fn next(&mut self) -> Option<(T, usize)> {
     	loop {
