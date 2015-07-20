@@ -15,7 +15,7 @@ struct Matrix<'a, T:'a> where T:  'a + Copy {
 
 
 impl<'a, T:'a> Matrix<'a, T> where T: 'a + Copy + Display {
-	fn new<'b> (_m : &'b mut Vec<T>, _n : usize) -> Matrix<'b, T> {
+	fn new<'b> (_m : &'b mut [T], _n : usize) -> Matrix<'b, T> {
 		Matrix{m : _m, n : _n}
 	}
 
