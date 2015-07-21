@@ -7,7 +7,6 @@ use std::fmt::Display;
 struct Idx(usize, usize);
 
 
-
 struct Matrix<'a, T:'a> where T:  'a + Copy {
 	m : &'a mut [T],
 	n : usize,
@@ -35,12 +34,12 @@ impl<'a, T:'a> Matrix<'a, T> where T: 'a + Copy + Display {
 	  & self.m[row * self.n .. row * self.n + self.n ]
 	}
 
-	fn print(&self) {
+	fn print(&self, b : & [T]) {
 		for i in 0..self.n {
 			for j in 0..self.n {
 				print!("{:9.3} ", self.val(Idx(j, i)));
 			}
-			println!("  ");
+			println!("  | {:9.3}", b[i]);
 		}
 	}
 }
@@ -85,50 +84,51 @@ fn main() {
 
 	const MAT_SIZE : usize = 6;
 
-	// let mut v : Vec<f32> = vec![
-	// 	1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
-	// 	1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
-	// 	1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
-	// 	1.00, 1.88, 3.55,  6.70, 12.62, 230.80,
+	let mut v : Vec<f64> = vec![
+		1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
+		1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
+		1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
+		1.00, 1.88, 3.55,  6.70, 12.62, 23.80,
+		1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
+		1.00, 3.14, 9.87, 31.01, 97.41, 306.02	];
+
+	// let mut v : Vec<f64> = vec![
 	// 	1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
+	// 	1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
+	// 	1.00, 1.88, 3.55,  6.70, 12.62, 230.80,
+	// 	1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
+	// 	1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
 	// 	1.00, 3.14, 9.87, 31.01, 97.41, 306.02];
 
-	let mut v : Vec<f32> = vec![
-		1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
-		1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
-		1.00, 1.88, 3.55,  6.70, 12.62, 230.80,
-		1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
-		1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
-		1.00, 3.14, 9.87, 31.01, 97.41, 306.02];
+
+	let b: [f64; MAT_SIZE] = [-0.01, 0.61, 0.91, 0.99, 0.60, 0.02];
+//	let b: [f64; MAT_SIZE] =   [0.60,  0.61, 0.99, 0.91, -0.01, 0.02];
 
 
 	let mat = Matrix::new(&mut v, MAT_SIZE);
 
-	let mut r : Vec<f32> = Vec::new();
+	let mut r : Vec<f64> = Vec::new();
 	let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
-	for i in 0..mat.n {
+	let mut bm: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
-		let max;
-		{
+	for i in 0..MAT_SIZE {
+
+		let max = {
 			let mat_iter = MatrixRowIter::new(&mat, &mut used, i);
-
-			max = mat_iter
-						.inspect(|&item| println!("{:9.3} {:5}", item.0, item.1) )
-						.fold((0.0, -1),
-							|max, item| if item.0.abs() >= max.0 { item } else { max } )
-						;
-		}
+			mat_iter.fold((0.0, -1), |max, item| if item.0.abs() >= max.0 { item } else { max } )
+		};
 
 		println!("max v:{:9.3} idx:{}", max.0, max.1);
 		used[max.1] = true;
 		println!("=======");
 
 		r.extend(mat.get_row_slice(max.1).iter().cloned());
+		bm[i] = b[max.1];
 	}
 
-	let mut mat_out = Matrix::new(&mut r, mat.n);
-	mat_out.print();
+	let mut mat_out = Matrix::new(&mut r, MAT_SIZE);
+	mat_out.print(&bm);
 
 	println!("========================");
 
@@ -137,12 +137,33 @@ fn main() {
 			let tmp = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
 			for col in dia+1..mat_out.n {
 				*mat_out.val_mut(Idx(col, row)) -= tmp * *mat_out.val(Idx(col, dia));
-				*mat_out.val_mut(Idx(dia, row)) = 0.0;
 			}
+			*mat_out.val_mut(Idx(dia, row)) = 0.0;
+			bm[row] -= tmp * bm[dia];
 		}
 	}
 
-	mat_out.print();
+
+	let mut x: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
+
+
+	for row in (0 .. MAT_SIZE).rev() {
+		let mut tmp = bm[row];
+		for j in (row+1 .. MAT_SIZE).rev() {
+			tmp -= x[j] * *mat_out.val(Idx(j, row));
+		}
+		x[row] = tmp / *mat_out.val(Idx(row, row));
+	}
+
+
+	mat_out.print(&bm);
+
+	println!("--------------------");
+
+	for j in 0..MAT_SIZE {
+		print!("{:9.5} ", x[j]);
+	}
+	println!("");
 
 }
 
