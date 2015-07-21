@@ -1,40 +1,41 @@
 {
-	"folders":
-	[
-		{
-			"path": "."
-		}
-	],
+  "folders":
+  [
+    {
+      "path": "."
+    }
+  ],
 
     "settings" :
     {
-        "tab_size": 2
+        "tab_size": 2,
+        "translate_tabs_to_spaces": true
     },
 
     "build_systems":
     [
         {
-	        "name": "rust_build_prj",
-			    "cmd": ["rustc", "$file_name"],
-			    "selector": "source.rust",
-			    "file_regex": "^(.*?):([0-9]+):([0-9]+):\\s[0-9]+:[0-9]+\\s(.*)$",
-			    "working_dir" : "$file_path",
-			    "osx":
-			    {
-			        "path": "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
-			    },
+          "name": "rust_build_prj",
+          "cmd": ["rustc", "$file_name"],
+          "selector": "source.rust",
+          "file_regex": "^(.*?):([0-9]+):([0-9]+):\\s[0-9]+:[0-9]+\\s(.*)$",
+          "working_dir" : "$file_path",
+          "osx":
+          {
+              "path": "/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/bin"
+          },
 
-			    "variants": [
-			        {
-			            "selector": "source.rust",
-			            "cmd": ["./$file_base_name"],
-			            "name": "run_rust_prj",
-			            "windows":
-			            {
-			                "cmd": ["$file_base_name.exe"]
-			            }
-			        }
-			    ]
+          "variants": [
+              {
+                  "selector": "source.rust",
+                  "cmd": ["./$file_base_name"],
+                  "name": "run_rust_prj",
+                  "windows":
+                  {
+                      "cmd": ["$file_base_name.exe"]
+                  }
+              }
+          ]
         }
     ]
 }
