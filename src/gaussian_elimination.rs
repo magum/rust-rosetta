@@ -1,6 +1,7 @@
 // http://rosettacode.org/wiki/Gaussian_elimination
 
-use std::num::Signed;
+use std::num::Zero;
+use std::ops::*;
 
 struct Idx(usize, usize);
 
@@ -44,6 +45,17 @@ impl<'a, T> MatrixRowIter<'a, T> where T: Copy {
 }
 
 
+trait GteAbs {
+    fn gteabs(&self, other: &Self) -> bool;
+}
+
+
+impl GteAbs for f64{
+    fn gteabs(&self, other: &Self) -> bool {
+        return self.abs() >= *other
+    }
+}
+
 
 impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
     type Item = (T, usize);
@@ -69,27 +81,27 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
 
 
 
-fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + std::num::Signed {
+fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Zero + GteAbs + Div + Mul {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
-    let mut bm: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
+    let mut bm: [T; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
-    let mut a_mod: [f64; MAT_SIZE*MAT_SIZE] = unsafe{std::mem::uninitialized()};
+    let mut a_mod: [T; MAT_SIZE*MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
     for i in 0..MAT_SIZE {
         let max = {
             let mat_iter = MatrixRowIter::new(&a, MAT_SIZE, &mut used, i);
-            mat_iter.fold((0.0, -1), |max, item| if item.0.abs() >= max.0 { item } else { max } )
+            mat_iter.fold((T::zero(), -1), |max, item| if item.0.gteabs(&max.0) { item } else { max } )
         };
 
         used[max.1] = true;
 
-            for (i, o) in get_row_slice(&a, MAT_SIZE, max.1).iter()
-                                                            .zip(a_mod[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
-                                                            .iter_mut()) {
-                *o = i.clone();
-            }
+        for (i, o) in get_row_slice(&a, MAT_SIZE, max.1).iter()
+                                                        .zip(a_mod[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
+                                                        .iter_mut()) {
+            *o = i.clone();
+        }
 
         bm[i] = b[max.1];
     }
@@ -98,7 +110,7 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + std
 
     for dia in 0..mat_out.n {
         for row in dia+1..mat_out.n {
-            let tmp = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
+            let tmp  = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
             for col in dia+1..mat_out.n {
                 *mat_out.val(Idx(col, row)) -= tmp * *mat_out.val(Idx(col, dia));
             }
