@@ -1,6 +1,10 @@
 // http://rosettacode.org/wiki/Gaussian_elimination
 
+use std::num::Signed;
+
 struct Idx(usize, usize);
+
+const MAT_SIZE : usize = 6;
 
 
 struct Matrix<'a, T:'a> where T:  'a + Copy {
@@ -63,44 +67,34 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
     }
 }
 
-fn main() {
 
-    const MAT_SIZE : usize = 6;
 
-    let v : Vec<f64> = vec![
-	    1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
-	    1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
-	    1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
-	    1.00, 1.88, 3.55,  6.70, 12.62, 23.80,
-	    1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
-	    1.00, 3.14, 9.87, 31.01, 97.41, 306.02  ];
-
-    let b: [f64; MAT_SIZE] = [-0.01, 0.61, 0.91, 0.99, 0.60, 0.02];
+fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + std::num::Signed {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
     let mut bm: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
-    let mut r: [f64; MAT_SIZE*MAT_SIZE] = unsafe{std::mem::uninitialized()};
+    let mut a_mod: [f64; MAT_SIZE*MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
     for i in 0..MAT_SIZE {
         let max = {
-            let mat_iter = MatrixRowIter::new(&v, MAT_SIZE, &mut used, i);
+            let mat_iter = MatrixRowIter::new(&a, MAT_SIZE, &mut used, i);
             mat_iter.fold((0.0, -1), |max, item| if item.0.abs() >= max.0 { item } else { max } )
         };
 
         used[max.1] = true;
 
-		    for (i, o) in get_row_slice(&v, MAT_SIZE, max.1).iter()
-		    																								.zip(r[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
-		    																										.iter_mut()) {
-		        *o = i.clone();
-		    }
+            for (i, o) in get_row_slice(&a, MAT_SIZE, max.1).iter()
+                                                            .zip(a_mod[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
+                                                            .iter_mut()) {
+                *o = i.clone();
+            }
 
         bm[i] = b[max.1];
     }
 
-    let mut mat_out = Matrix::new(&mut r, MAT_SIZE);
+    let mut mat_out = Matrix::new(&mut a_mod, MAT_SIZE);
 
     for dia in 0..mat_out.n {
         for row in dia+1..mat_out.n {
@@ -113,18 +107,35 @@ fn main() {
         }
     }
 
-    let mut x: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
     for row in (0 .. MAT_SIZE).rev() {
         let mut tmp = bm[row];
         for j in (row+1 .. MAT_SIZE).rev() {
-            tmp -= x[j] * *mat_out.val(Idx(j, row));
+            tmp -= r[j] * *mat_out.val(Idx(j, row));
         }
-        x[row] = tmp / *mat_out.val(Idx(row, row));
+        r[row] = tmp / *mat_out.val(Idx(row, row));
     }
+}
+
+
+fn main() {
+
+    let a : [f64; MAT_SIZE*MAT_SIZE] = [
+        1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
+        1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
+        1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
+        1.00, 1.88, 3.55,  6.70, 12.62, 23.80,
+        1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
+        1.00, 3.14, 9.87, 31.01, 97.41, 306.02  ];
+
+    let b: [f64; MAT_SIZE] = [-0.01, 0.61, 0.91, 0.99, 0.60, 0.02];
+    let mut r: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
+
+
+    gaussian_elimination(a, b, r);
 
     for j in 0..MAT_SIZE {
-        print!("{:9.5} ", x[j]);
+        print!("{:9.5} ", r[j]);
     }
     println!("");
 
