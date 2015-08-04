@@ -1,5 +1,4 @@
 // http://rosettacode.org/wiki/Gaussian_elimination
-#![feature(negate_unsigned)]
 use std::ops::*;
 
 struct Idx(usize, usize);
@@ -58,8 +57,8 @@ impl ValueType for f64{
 
 
 impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
-    type Item = (T, usize);
-    fn next(&mut self) -> Option<(T, usize)> {
+    type Item = (T, Option<usize>);
+    fn next(&mut self) -> Option<(T, Option<usize>)> {
         loop {
             if self.row >= self.n {
                 return None
@@ -75,12 +74,11 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
         let v = self.m[self.col + self.row * self.n];
         let ret = self.row;
         self.row += 1;
-        Some((v, ret))
+        Some((v, Some(ret)))
     }
 }
 
 
-//Div<Output=T> + Mul<Output=T>
 fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + ValueType {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
@@ -92,18 +90,19 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Val
     for i in 0..MAT_SIZE {
         let max = {
             let mat_iter = MatrixRowIter::new(&a, MAT_SIZE, &mut used, i);
-            mat_iter.fold((T::zero(), -1), |max, item| if item.0.gteabs(&max.0) { item } else { max } )
+            mat_iter.fold((T::zero(), None), |max, item| if item.0.gteabs(&max.0) { item } else { max } )
         };
 
-        used[max.1] = true;
+        let max_index = max.1.unwrap();
+        used[max_index] = true;
 
-        for (i, o) in get_row_slice(&a, MAT_SIZE, max.1).iter()
-                                                        .zip(a_mod[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
-                                                        .iter_mut()) {
+        for (i, o) in get_row_slice(&a, MAT_SIZE, max_index).iter()
+                                                            .zip(a_mod[ i * MAT_SIZE .. (i+1) * MAT_SIZE ]
+                                                            .iter_mut()) {
             *o = i.clone();
         }
 
-        bm[i] = b[max.1];
+        bm[i] = b[max_index];
     }
 
     let mut mat_out = Matrix::new(&mut a_mod, MAT_SIZE);
