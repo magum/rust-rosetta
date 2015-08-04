@@ -2,6 +2,10 @@
 
 use std::num::Zero;
 use std::ops::*;
+extern crate core;
+use core::num::Float;
+//extern crate num;
+//use num::traits::Num;
 
 struct Idx(usize, usize);
 
@@ -80,8 +84,8 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
 }
 
 
-
-fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Zero + GteAbs + Div + Mul {
+//Div<Output=T> + Mul<Output=T>
+fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + GteAbs + core::num::Float {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
@@ -110,7 +114,7 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Zer
 
     for dia in 0..mat_out.n {
         for row in dia+1..mat_out.n {
-            let tmp  = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
+            let tmp : T = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
             for col in dia+1..mat_out.n {
                 *mat_out.val(Idx(col, row)) -= tmp * *mat_out.val(Idx(col, dia));
             }
