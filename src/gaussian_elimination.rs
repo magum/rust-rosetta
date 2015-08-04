@@ -1,6 +1,5 @@
 // http://rosettacode.org/wiki/Gaussian_elimination
-#![feature(zero_one)]
-use std::num::Zero;
+#![feature(negate_unsigned)]
 use std::ops::*;
 
 struct Idx(usize, usize);
@@ -45,15 +44,16 @@ impl<'a, T> MatrixRowIter<'a, T> where T: Copy {
 }
 
 
-trait GteAbs {
+
+trait ValueType : Add<Output=Self> + Sub<Output=Self> + Mul<Output=Self> + Div<Output=Self> {
     fn gteabs(&self, other: &Self) -> bool;
+    fn zero() -> Self;
 }
 
 
-impl GteAbs for f64{
-    fn gteabs(&self, other: &Self) -> bool {
-        return self.abs() >= *other
-    }
+impl ValueType for f64{
+    fn gteabs(&self, other: &Self) -> bool { return self.abs() >= *other  }
+    fn zero() -> Self { return 0.0 }
 }
 
 
@@ -81,11 +81,7 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
 
 
 //Div<Output=T> + Mul<Output=T>
-fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + GteAbs + Zero +
-																																			Div<Output=T> + 
-																																			Mul<Output=T> +
-																																			Add<Output=T> + 
-																																			Sub<Output=T> {
+fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + ValueType {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
@@ -116,7 +112,7 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Gte
         for row in dia+1..mat_out.n {
             let tmp : T = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
             for col in dia+1..mat_out.n {
-                *mat_out.val(Idx(col, row)) = *mat_out.val(Idx(col, row)) - 
+                *mat_out.val(Idx(col, row)) = *mat_out.val(Idx(col, row)) -
                                                tmp * *mat_out.val(Idx(col, dia));
             }
             *mat_out.val(Idx(dia, row)) = T::zero();
