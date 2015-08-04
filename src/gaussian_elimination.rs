@@ -1,11 +1,7 @@
 // http://rosettacode.org/wiki/Gaussian_elimination
-
+#![feature(zero_one)]
 use std::num::Zero;
 use std::ops::*;
-extern crate core;
-use core::num::Float;
-//extern crate num;
-//use num::traits::Num;
 
 struct Idx(usize, usize);
 
@@ -85,7 +81,11 @@ impl<'a, T> Iterator for MatrixRowIter<'a, T> where T: Copy {
 
 
 //Div<Output=T> + Mul<Output=T>
-fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + GteAbs + core::num::Float {
+fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + GteAbs + Zero +
+																																			Div<Output=T> + 
+																																			Mul<Output=T> +
+																																			Add<Output=T> + 
+																																			Sub<Output=T> {
 
     let mut used: [bool; MAT_SIZE] = [false; MAT_SIZE];
 
@@ -116,10 +116,11 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Gte
         for row in dia+1..mat_out.n {
             let tmp : T = *mat_out.val(Idx(dia, row)) / *mat_out.val(Idx(dia, dia));
             for col in dia+1..mat_out.n {
-                *mat_out.val(Idx(col, row)) -= tmp * *mat_out.val(Idx(col, dia));
+                *mat_out.val(Idx(col, row)) = *mat_out.val(Idx(col, row)) - 
+                                               tmp * *mat_out.val(Idx(col, dia));
             }
-            *mat_out.val(Idx(dia, row)) = 0.0;
-            bm[row] -= tmp * bm[dia];
+            *mat_out.val(Idx(dia, row)) = T::zero();
+            bm[row] = bm[row] - tmp * bm[dia];
         }
     }
 
@@ -127,7 +128,7 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Gte
     for row in (0 .. MAT_SIZE).rev() {
         let mut tmp = bm[row];
         for j in (row+1 .. MAT_SIZE).rev() {
-            tmp -= r[j] * *mat_out.val(Idx(j, row));
+            tmp = tmp - r[j] * *mat_out.val(Idx(j, row));
         }
         r[row] = tmp / *mat_out.val(Idx(row, row));
     }
@@ -148,7 +149,7 @@ fn main() {
     let mut r: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
 
-    gaussian_elimination(a, b, r);
+    gaussian_elimination(&a, &b, &mut r);
 
     for j in 0..MAT_SIZE {
         print!("{:9.5} ", r[j]);
