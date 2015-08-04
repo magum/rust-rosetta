@@ -130,9 +130,9 @@ fn gaussian_elimination<T>(a : &[T], b : &[T], r : &mut [T]) where T: Copy + Val
 }
 
 
-fn main() {
+fn calculate_example(r : &mut [f64]) {
 
-    let a : [f64; MAT_SIZE*MAT_SIZE] = [
+   let a : [f64; MAT_SIZE*MAT_SIZE] = [
         1.00, 0.00, 0.00,  0.00,  0.00, 0.00,
         1.00, 0.63, 0.39,  0.25,  0.16, 0.10,
         1.00, 1.26, 1.58,  1.98,  2.49, 3.13,
@@ -140,16 +140,38 @@ fn main() {
         1.00, 2.51, 6.32, 15.88, 39.90, 100.28,
         1.00, 3.14, 9.87, 31.01, 97.41, 306.02  ];
 
-    let b: [f64; MAT_SIZE] = [-0.01, 0.61, 0.91, 0.99, 0.60, 0.02];
+   let b: [f64; MAT_SIZE] = [-0.01, 0.61, 0.91, 0.99, 0.60, 0.02];
+
+   gaussian_elimination(&a, &b, r);
+}
+
+
+#[cfg(not(test))]
+fn main() {
+
     let mut r: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
 
-
-    gaussian_elimination(&a, &b, &mut r);
+    calculate_example(&mut r);
 
     for j in 0..MAT_SIZE {
         print!("{:9.5} ", r[j]);
     }
     println!("");
+}
+
+
+
+#[test]
+fn test_result() {
+
+    let expected_result: [f64; MAT_SIZE] = [-0.01000, 1.60279, -1.61320, 1.24549, -0.49099, 0.06576];
+    let mut r: [f64; MAT_SIZE] = unsafe{std::mem::uninitialized()};
+
+    calculate_example(&mut r);
+
+    for (i, o) in expected_result.iter().zip(r.iter_mut()) {
+        assert!((*i - *o).abs() < 0.001);
+    }
 
 }
 
